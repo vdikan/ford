@@ -56,6 +56,8 @@ class FortranReader(object):
     # Regexes
     COM_RE = re.compile("^([^\"'!]|(\'[^']*')|(\"[^\"]*\"))*(!.*)$")
     SC_RE = re.compile("^([^;]*);(.*)$")
+    CODE_BEGIN = re.compile("^\s*!!@code\s*$")
+    CODE_END = re.compile("^\s*!!@endcode\s*$")
 
     def __init__(self,filename,docmark='!',predocmark='',docmark_alt='',
                  predocmark_alt='',fixed=False,length_limit=True,
@@ -108,6 +110,7 @@ class FortranReader(object):
         self.docbuffer = []
         self.pending = []
         self.prevdoc = False
+        self.codeblock = False
         self.reading_alt = 0
         self.docmark = docmark
         self.doc_re = re.compile("^([^\"'!]|('[^']*')|(\"[^\"]*\"))*(!{}.*)$".format(re.escape(docmark)))
@@ -150,9 +153,11 @@ class FortranReader(object):
             return self.docbuffer.pop(0)
             
         # Loop through the source code until you have a complete line (including
-        # all line continuations), or a complete preceding doc block
+        # all line continuations), or a complete preceding doc block,
+        # or a complete code block.
         done = False
         continued = False
+        # reading_codeblock = False
         reading_predoc = False
         reading_predoc_alt = 0
         linebuffer = ""
@@ -220,6 +225,13 @@ class FortranReader(object):
             # Capture any documentation comments
             match = self.doc_re.match(line)
             if match:
+                # XXX
+
+                if self.CODE_BEGIN.match(line):
+                    self.codeblock = True
+                elif self.CODE_END.match(line):
+                    self.codeblock = False
+
                 self.reading_alt = 0
                 reading_predoc_alt = 0
                 self.docbuffer.append(match.group(4))
@@ -240,6 +252,11 @@ class FortranReader(object):
                     self.docbuffer.append(tmp)
                 line = line[0:match.start(4)]
             line = line.strip()
+
+            # XXX Capture code lines
+            if self.codeblock:
+                self.docbuffer.append("!"+self.docmark+line)
+                # self.docbuffer.append("!"+self.docmark)
 
             # If this is a blank line following previous documentation, return
             # a line of empty documentation.

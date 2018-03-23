@@ -36,6 +36,13 @@ NOTE_RE = [re.compile(r"@({})\s*(((?!@({})).)*?)@end\1\s*(</p>)?".format(note,
            '|'.join(NOTE_TYPE.keys())), re.IGNORECASE|re.DOTALL) for note in NOTE_TYPE] \
         + [re.compile(r"@({})\s*(.*?)\s*</p>".format(note),
                       re.IGNORECASE|re.DOTALL) for note in NOTE_TYPE]
+
+CODE_TYPE = {'code':'info'}
+CODE_RE = [re.compile(r"@({})\s*(((?!@({})).)*?)@end\1\s*(</p>)?".format(code,
+           '|'.join(CODE_TYPE.keys())), re.IGNORECASE|re.DOTALL) for code in CODE_TYPE] \
+        + [re.compile(r"@({})\s*(.*?)\s*</p>".format(code),
+                      re.IGNORECASE|re.DOTALL) for code in CODE_TYPE]
+
 LINK_RE = re.compile(r"\[\[(\w+(?:\.\w+)?)(?:\((\w+)\))?(?::(\w+)(?:\((\w+)\))?)?\]\]")
 
 
@@ -52,6 +59,16 @@ def sub_notes(docs):
         return ret
     for regex in NOTE_RE:
         docs = regex.sub(substitute,docs)
+
+    def code_substitute(match):
+        ret = "</p><div class=\"alert\" role=\"alert\"><h4>{}</h4>" \
+              "<pre class=\"pre-scrollable\">{}</pre></div>".format(match.group(1).capitalize(), match.group(2))
+        # ret = "</p><pre>{}</pre></div>".format(match.group(2))
+        if len(match.groups()) >= 4 and not match.group(4): ret += '\n<p>'
+        return ret
+    for regex in CODE_RE:
+        docs = regex.sub(code_substitute,docs)
+
     return docs
 
 

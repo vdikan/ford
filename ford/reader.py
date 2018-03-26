@@ -56,8 +56,8 @@ class FortranReader(object):
     # Regexes
     COM_RE = re.compile("^([^\"'!]|(\'[^']*')|(\"[^\"]*\"))*(!.*)$")
     SC_RE = re.compile("^([^;]*);(.*)$")
-    CODE_BEGIN = re.compile("^\s*!!@code\s*$")
-    CODE_END = re.compile("^\s*!!@endcode\s*$")
+    CODE_BEGIN = re.compile("^\s*!!@cblock\s*$")
+    CODE_END = re.compile("^\s*!!@endcblock\s*$")
 
     def __init__(self,filename,docmark='!',predocmark='',docmark_alt='',
                  predocmark_alt='',fixed=False,length_limit=True,
@@ -225,8 +225,6 @@ class FortranReader(object):
             # Capture any documentation comments
             match = self.doc_re.match(line)
             if match:
-                # XXX
-
                 if self.CODE_BEGIN.match(line):
                     self.codeblock = True
                 elif self.CODE_END.match(line):
@@ -253,7 +251,7 @@ class FortranReader(object):
                 line = line[0:match.start(4)]
             line = line.strip()
 
-            # XXX Capture code lines
+            # Capture code lines
             if self.codeblock:
                 self.docbuffer.append("!"+self.docmark+line)
                 # self.docbuffer.append("!"+self.docmark)

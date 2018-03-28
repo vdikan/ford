@@ -56,8 +56,8 @@ class FortranReader(object):
     # Regexes
     COM_RE = re.compile("^([^\"'!]|(\'[^']*')|(\"[^\"]*\"))*(!.*)$")
     SC_RE = re.compile("^([^;]*);(.*)$")
-    CODE_BEGIN = re.compile("^\s*!!@cblock\s*$")
-    CODE_END = re.compile("^\s*!!@endcblock\s*$")
+    CODE_BEGIN = re.compile("^\s*!!@code\s*$")
+    CODE_END = re.compile("^\s*!!@endcode\s*$")
 
     def __init__(self,filename,docmark='!',predocmark='',docmark_alt='',
                  predocmark_alt='',fixed=False,length_limit=True,

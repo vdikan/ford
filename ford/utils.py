@@ -28,8 +28,12 @@
 import re
 import os.path
 
-NOTE_TYPE = {'code':'code',
-             'note':'info',
+from bleach import clean
+from pygments import highlight
+from pygments.lexers import FortranLexer
+from pygments.formatters import HtmlFormatter
+
+NOTE_TYPE = {'note':'info',
              'warning':'warning',
              'todo':'success',
              'bug':'danger'}
@@ -38,11 +42,8 @@ NOTE_RE = [re.compile(r"@({})\s*(((?!@({})).)*?)@end\1\s*(</p>)?".format(note,
         + [re.compile(r"@({})\s*(.*?)\s*</p>".format(note),
                       re.IGNORECASE|re.DOTALL) for note in NOTE_TYPE]
 
-CODE_TYPE = {'cblock':'info'}
-CODE_RE = [re.compile(r"@({})\s*(((?!@({})).)*?)@end\1\s*(</p>)?".format(code,
-           '|'.join(CODE_TYPE.keys())), re.IGNORECASE|re.DOTALL) for code in CODE_TYPE] \
-        + [re.compile(r"@({})\s*(.*?)\s*</p>".format(code),
-                      re.IGNORECASE|re.DOTALL) for code in CODE_TYPE]
+CODE_RE = re.compile(r"@({})\s*(((?!@({})).)*?)@end\1\s*(</p>)?".format("code","code"), 
+            re.IGNORECASE|re.DOTALL)
 
 LINK_RE = re.compile(r"\[\[(\w+(?:\.\w+)?)(?:\((\w+)\))?(?::(\w+)(?:\((\w+)\))?)?\]\]")
 
@@ -62,13 +63,16 @@ def sub_notes(docs):
         docs = regex.sub(substitute,docs)
 
     def code_substitute(match):
-        # ret = "</p><div class=\"alert\" role=\"alert\"><h4>{}</h4>" \
-        #       "<pre class=\"pre-scrollable\">{}</pre></div>".format(match.group(1).capitalize(), match.group(2))
-        ret = "</p><pre class=\"pre-scrollable\">{}</pre>".format(match.group(2))
-        if len(match.groups()) >= 4 and not match.group(4): ret += '\n<p>'
+        # ret = "</p><pre class=\"pre-scrollable\">{}</pre>".format(match.group(2))
+        # ret = "{}".format(
+                # highlight(
+                    # re.sub('&amp;', '', 
+                        # clean(match.group(2), strip=True).strip("&amp")), 
+                    # FortranLexer(),
+                    # HtmlFormatter(linenos=False, cssclass='hl')))
+        ret = "<pre>{}</pre>".format(match.group(2))
         return ret
-    for regex in CODE_RE:
-        docs = regex.sub(code_substitute,docs)
+    docs = CODE_RE.sub(code_substitute,docs)
 
     return docs
 
